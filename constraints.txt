@@ -1,0 +1,11 @@
+# Conservative, reproducible pins for the current project baseline.
+# Keep this file in sync with requirements.txt and update intentionally.
+requests==2.32.3
+Pillow==10.4.0
+pygame==2.6.1
+pystray==0.19.5
+reportlab==4.2.2
+python-docx==1.1.2
+SpeechRecognition==3.10.4
+PyAudio==0.2.14
+pyttsx3==2.98
