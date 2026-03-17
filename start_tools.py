@@ -1,15 +1,15 @@
 """
-Writer Tool 外置工具启动器
+Writer Tool 外置工具启动器（增强版）
 
-提供统一的图形界面入口，可启动:
-- 资源管理器 (Asset Editor)
-- 助手配置编辑器 (Assistant Config Editor)
-- 事件分析工具 (Event Analyzer)
+提供统一的图形界面入口，可启动：
+- 资源管理器 / 助手配置编辑器 / 事件分析工具
+- 环境体检 / 工作区清理 / 发布包打包
 
-双击此文件或运行 python start_tools.py 启动
+双击此文件或运行 python start_tools.py 启动。
 """
 
-import logging
+from __future__ import annotations
+
 import subprocess
 import sys
 from pathlib import Path
@@ -48,27 +48,48 @@ class ToolsLauncher(tk.Tk):
             "icon": "🔍",
             "color": "#2E7D32",
         },
+        {
+            "name": "环境体检",
+            "desc": "检查 tkinter、核心依赖和关键文件\n适合覆盖升级后先跑一遍",
+            "script": "scripts/maintenance/healthcheck.py",
+            "args": ["--gui"],
+            "icon": "🩺",
+            "color": "#D35400",
+        },
+        {
+            "name": "清理工作区",
+            "desc": "删除 __pycache__、tmpclaude-*、dist\n清掉临时目录再打包",
+            "script": "scripts/maintenance/cleanup_workspace.py",
+            "args": ["--gui"],
+            "icon": "🧹",
+            "color": "#16A085",
+        },
+        {
+            "name": "打包发布 ZIP",
+            "desc": "自动排除缓存和临时目录\n生成干净的发布压缩包",
+            "script": "scripts/release/build_release_zip.py",
+            "args": ["--gui"],
+            "icon": "🗜️",
+            "color": "#C0392B",
+        },
     ]
 
     def __init__(self):
         super().__init__()
         self.title("Writer Tool - 工具箱")
-        self.geometry("500x420")
+        self.geometry("620x700")
         self.resizable(False, False)
 
-        # Center window
         self.update_idletasks()
-        x = (self.winfo_screenwidth() - 500) // 2
-        y = (self.winfo_screenheight() - 420) // 2
+        x = (self.winfo_screenwidth() - 620) // 2
+        y = (self.winfo_screenheight() - 700) // 2
         self.geometry(f"+{x}+{y}")
 
         self.script_dir = Path(__file__).resolve().parent
         self._setup_ui()
 
     def _setup_ui(self):
-        """Setup the launcher UI."""
-        # Header
-        header = tk.Frame(self, bg="#2C3E50", height=80)
+        header = tk.Frame(self, bg="#2C3E50", height=88)
         header.pack(fill=tk.X)
         header.pack_propagate(False)
 
@@ -79,22 +100,29 @@ class ToolsLauncher(tk.Tk):
             fg="white",
             bg="#2C3E50",
         )
-        title_label.pack(pady=20)
+        title_label.pack(pady=(18, 0))
 
-        # Tools container
+        sub_label = tk.Label(
+            header,
+            text="创作工具 + 维护脚本 + 打包发布",
+            font=("Microsoft YaHei UI", 10),
+            fg="#D7E3F0",
+            bg="#2C3E50",
+        )
+        sub_label.pack(pady=(4, 0))
+
         container = tk.Frame(self, bg="#F5F5F5")
         container.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
-        for i, tool in enumerate(self.TOOLS):
-            self._create_tool_card(container, tool, i)
+        for tool in self.TOOLS:
+            self._create_tool_card(container, tool)
 
-        # Footer
         footer = tk.Frame(self, bg="#F5F5F5")
         footer.pack(fill=tk.X, padx=20, pady=(0, 15))
 
         version_label = tk.Label(
             footer,
-            text="Writer Tool v1.02 | 外置工具启动器",
+            text="Writer Tool v1.10 | 工程增强工具箱",
             font=("Microsoft YaHei UI", 9),
             fg="#888888",
             bg="#F5F5F5",
@@ -113,8 +141,7 @@ class ToolsLauncher(tk.Tk):
         )
         help_btn.pack(side=tk.RIGHT)
 
-    def _create_tool_card(self, parent, tool: dict, index: int):
-        """Create a tool card widget."""
+    def _create_tool_card(self, parent, tool: dict):
         card = tk.Frame(
             parent,
             bg="white",
@@ -122,13 +149,11 @@ class ToolsLauncher(tk.Tk):
             highlightbackground="#E0E0E0",
             highlightthickness=1,
         )
-        card.pack(fill=tk.X, pady=8)
+        card.pack(fill=tk.X, pady=7)
 
-        # Inner content
         inner = tk.Frame(card, bg="white")
         inner.pack(fill=tk.X, padx=15, pady=12)
 
-        # Icon and title row
         icon_label = tk.Label(
             inner,
             text=tool["icon"],
@@ -161,7 +186,6 @@ class ToolsLauncher(tk.Tk):
         )
         desc_label.pack(anchor=tk.W)
 
-        # Launch button
         launch_btn = tk.Button(
             inner,
             text="启动",
@@ -178,11 +202,10 @@ class ToolsLauncher(tk.Tk):
         )
         launch_btn.pack(side=tk.RIGHT, padx=5)
 
-        # Hover effect
-        def on_enter(e, c=card):
+        def on_enter(_event, c=card):
             c.configure(highlightbackground=tool["color"], highlightthickness=2)
 
-        def on_leave(e, c=card):
+        def on_leave(_event, c=card):
             c.configure(highlightbackground="#E0E0E0", highlightthickness=1)
 
         card.bind("<Enter>", on_enter)
@@ -192,9 +215,7 @@ class ToolsLauncher(tk.Tk):
             widget.bind("<Leave>", on_leave)
 
     def _launch_tool(self, tool: dict):
-        """Launch a tool in a new process."""
         script_path = self.script_dir / tool["script"]
-
         if not script_path.exists():
             messagebox.showerror("错误", f"找不到脚本文件:\n{script_path}")
             return
@@ -204,7 +225,6 @@ class ToolsLauncher(tk.Tk):
             if "args" in tool:
                 args.extend(tool["args"])
 
-            # Launch detached process
             if sys.platform == "win32":
                 subprocess.Popen(
                     args,
@@ -217,45 +237,33 @@ class ToolsLauncher(tk.Tk):
                     start_new_session=True,
                     cwd=str(self.script_dir),
                 )
-
-            # Minimize launcher
             self.iconify()
-
-        except Exception as e:
-            messagebox.showerror("启动失败", f"无法启动工具:\n{e}")
+        except Exception as exc:
+            messagebox.showerror("启动失败", f"无法启动工具:\n{exc}")
 
     def _show_help(self):
-        """Show help dialog."""
-        help_text = """Writer Tool 外置工具说明
+        help_text = """Writer Tool 工具箱说明
 
-【资源管理器】
-用于管理视觉小说/游戏的资源文件和事件。
-- 打开 .writerproj 项目文件
-- 管理图片、音频等资源
-- 编辑游戏事件
+【创作工具】
+- 资源管理器：管理项目资源、事件和 .writerproj 文件
+- 助手配置编辑器：编辑浮动助手行为和 JSON 配置
+- 事件分析工具：检查循环、死路径和缺失引用
 
-【助手配置编辑器】
-配置浮动助手的行为和事件触发。
-- 编辑事件映射配置
-- 设置里程碑和成就
-- JSON 格式，支持语法高亮
+【工程维护】
+- 环境体检：检查 tkinter、核心依赖、关键入口文件
+- 清理工作区：清掉 __pycache__、tmpclaude-*、dist、build
+- 打包发布 ZIP：自动排除缓存与临时目录，输出干净压缩包
 
-【事件分析工具】
-分析事件文件的逻辑完整性。
-- 检测循环引用
-- 检测死路径
-- 检测缺失的事件引用
-- 生成分析报告
-
-快捷键:
-- Ctrl+Z: 撤销
-- Ctrl+Y: 重做
-- Ctrl+S: 保存
-- Ctrl+Shift+F: 格式化 JSON
+推荐顺序：
+1. 覆盖升级包
+2. 运行“环境体检”
+3. 运行“清理工作区”
+4. 正常启动主程序验证
+5. 运行“打包发布 ZIP”生成对外包
 """
         dialog = tk.Toplevel(self)
         dialog.title("帮助")
-        dialog.geometry("450x500")
+        dialog.geometry("520x460")
         dialog.transient(self)
 
         text = tk.Text(

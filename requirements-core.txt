@@ -1,0 +1,9 @@
+-c constraints.txt
+
+# Core runtime dependencies
+requests
+Pillow
+pygame
+pystray
+reportlab
+python-docx

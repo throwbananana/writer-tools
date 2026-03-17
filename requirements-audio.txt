@@ -1,0 +1,7 @@
+-c constraints.txt
+-r requirements-core.txt
+
+# Optional voice / audio features
+SpeechRecognition
+PyAudio
+pyttsx3

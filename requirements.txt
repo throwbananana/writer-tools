@@ -1,14 +1,5 @@
 -c constraints.txt
+-r requirements-core.txt
 
-# Core runtime dependencies
-requests
-Pillow
-pygame
-pystray
-reportlab
-python-docx
-
-# Voice / audio features
-SpeechRecognition
-PyAudio
-pyttsx3
+# Optional voice / audio features:
+#   pip install -r requirements-audio.txt
